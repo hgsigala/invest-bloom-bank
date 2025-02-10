@@ -61,7 +61,8 @@
     "tailwindcss": "latest",
     "fs": "latest",
     "path": "latest",
-    "nodemailer": "latest"
+    "nodemailer": "latest",
+    "resend": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

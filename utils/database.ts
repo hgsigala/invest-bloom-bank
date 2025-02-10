@@ -77,17 +77,6 @@ export function calculateInterest(balance: number): { interest: number; period: 
   return { interest: 0, period: "year" }
 }
 
-const transporter = nodemailer.createTransport({
-  // Configure your email service here
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "your-email@gmail.com",
-    pass: "your-email-password",
-  },
-})
-
 export async function sendInterestNotification(user: User, interest: number, period: string) {
   const mailOptions = {
     from: '"Invest Bloom Bank" <your-email@gmail.com>',
@@ -105,8 +94,7 @@ Thank you for banking with Invest Bloom Bank!`,
   await transporter.sendMail(mailOptions)
 }
 
-export async function sendWeeklySummary() {
-  const users = await readUsers()
+export async function sendWeeklySummary(users: User[]) {
   let summaryText = "Weekly Summary of All Accounts:\n\n"
 
   for (const user of users) {
@@ -121,5 +109,39 @@ export async function sendWeeklySummary() {
   }
 
   await transporter.sendMail(mailOptions)
+}
+
+const transporter = nodemailer.createTransport({
+  // Configure your email service here
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "your-email@gmail.com",
+    pass: "your-email-password",
+  },
+})
+
+export async function checkIn(userId: string) {
+  const user = await findUser(userId)
+  if (!user) return { success: false, error: "User not found" }
+
+  const { interest, period } = calculateInterest(user.balance)
+
+  const updatedUser = {
+    ...user,
+    balance: user.balance + interest,
+    lastCheckIn: new Date().toISOString(),
+  }
+
+  await updateUser(updatedUser)
+  await sendInterestNotification(updatedUser, interest, period)
+
+  return { success: true, user: updatedUser }
+}
+
+export async function sendWeeklySummaries() {
+  const users = await readUsers()
+  await sendWeeklySummary(users)
 }
 
